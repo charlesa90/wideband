@@ -49,8 +49,8 @@ HeaterState HeaterControllerBase::GetHeaterState() const
 {
     return heaterState;
 }
-
-HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
+// Original code :
+/* HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
                                                HeaterAllow heaterAllowState,
                                                float heaterSupplyVoltage,
                                                float sensorTemp)
@@ -70,6 +70,40 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
             // measured voltage is high enough to auto-start heating, wait some time to stabilize
             heaterAllowed = m_batteryStableTimer.hasElapsedSec(HEATER_BATTERY_STAB_TIME);
         }
+    }
+
+    if (!heaterAllowed) */
+	
+// Claude mod :
+HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
+                                               HeaterAllow heaterAllowState,
+                                               float heaterSupplyVoltage,
+                                               float sensorTemp)
+{
+    bool heaterAllowed = heaterAllowState == HeaterAllow::Allowed;
+
+    // Check battery voltage for thresholds only if there is still no command over CAN
+    if (heaterAllowState == HeaterAllow::Unknown)
+    {
+        if (heaterSupplyVoltage < HEATER_BATTERY_OFF_VOLTAGE)
+        {
+            // Sous le seuil OFF : on coupe et on réarme
+            m_autoHeaterAllowed = false;
+            m_batteryStableTimer.reset();
+        }
+        else if (heaterSupplyVoltage < HEATER_BATTERY_ON_VOLTAGE)
+        {
+            // Zone d'hystérésis : on garde l'état actuel,
+            // mais l'activation exige une tension soutenue au-dessus de ON
+            m_batteryStableTimer.reset();
+        }
+        else if (m_batteryStableTimer.hasElapsedSec(HEATER_BATTERY_STAB_TIME))
+        {
+            // Au-dessus de ON depuis assez longtemps : on autorise
+            m_autoHeaterAllowed = true;
+        }
+
+        heaterAllowed = m_autoHeaterAllowed;
     }
 
     if (!heaterAllowed)

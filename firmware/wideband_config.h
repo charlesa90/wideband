@@ -45,11 +45,11 @@
 #define HEATER_PREHEAT_TIME 5
 #define HEATER_WARMUP_TIMEOUT 60
 
-#define HEATER_BATTERY_STAB_TIME 0.5f
+#define HEATER_BATTERY_STAB_TIME 1.0f //was 0.5. Prolonged to make sure not to catch a voltage spike. 
 // minimal battery voltage to start heating without CAN command
-#define HEATER_BATTERY_ON_VOLTAGE 9.5
+#define HEATER_BATTERY_ON_VOLTAGE 13.2 //was 9.5. Idea is to get alternator charge voltage, implying that the engine is running.
 // mininal battery voltage to continue heating
-#define HEATER_BATTERY_OFF_VOLTAGE 7
+#define HEATER_BATTERY_OFF_VOLTAGE 12.0 //was 7.0. Engine is stopped, but key is on. 
 
 // *******************************
 // Start driving the pump just before we're at target temperature

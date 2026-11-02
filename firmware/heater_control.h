@@ -48,6 +48,7 @@ public:
     float GetVoltageForState(HeaterState state, float sensorEsr);
 
 private:
+	bool m_autoHeaterAllowed = false; //added from Claude suggestion
     Pid m_pid;
 
     float rampVoltage = 0;
