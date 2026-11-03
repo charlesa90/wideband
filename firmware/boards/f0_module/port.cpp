@@ -6,7 +6,7 @@
 #include "ch.hpp"
 #include "hal.h"
 
-#define ADC_CHANNEL_COUNT 3
+#define ADC_CHANNEL_COUNT 4 //was 3
 
 void PortPrepareAnalogSampling()
 {
@@ -33,7 +33,7 @@ const ADCConversionGroup convGroup =
     ADC_CFGR1_CONT | ADC_CFGR1_RES_12BIT,                  // CFGR1
     ADC_TR(0, 0),       // TR
     ADC_SMPR_SMP_7P5,      // SMPR
-    ADC_CHSELR_CHSEL0 | ADC_CHSELR_CHSEL2 | ADC_CHSELR_CHSEL3
+    ADC_CHSELR_CHSEL0 | ADC_CHSELR_CHSEL2 | ADC_CHSELR_CHSEL3 | ADC_CHSELR_CHSEL8 //added ADC_CHSELR_CHSEL8
 };
 
 static float AverageSamples(adcsample_t* buffer, size_t idx)
@@ -56,7 +56,7 @@ void AnalogSampleStart()
     adcStartConversion(&ADCD1, &convGroup, adcBuffer, ADC_OVERSAMPLE);
 }
 
-AnalogResult AnalogSampleFinish()
+/* AnalogResult AnalogSampleFinish()
 {
     adcDoneSemaphore.wait(TIME_INFINITE);
 
@@ -67,10 +67,39 @@ AnalogResult AnalogSampleFinish()
             {
                 .NernstVoltage = AverageSamples(adcBuffer, 0) * (1.0 / NERNST_INPUT_GAIN),
                 .PumpCurrentVoltage = AverageSamples(adcBuffer, 1),
-                .HeaterSupplyVoltage = 0,
+                .HeaterSupplyVoltage = AverageSamples(adcBuffer, 3) * 11.0f, //was .HeaterSupplyVoltage = 0, | 11 comes from R20=100kohms and R21= 10kohms : (100+10)/10. 12V approx 1.09V at ADC input.
             },
         },
         .VirtualGroundVoltageInt = AverageSamples(adcBuffer, 2),
+
+        // TODO!
+        .McuTemp = 0,
+    };
+} */
+
+// Battery tension filtered (smoothing sinewave from heating PWM, preventing timer from resetting to 0)
+static float vbattFiltered = 0;
+
+AnalogResult AnalogSampleFinish()
+{
+    adcDoneSemaphore.wait(TIME_INFINITE);
+
+    // VBatt_Sense sur PB0 : diviseur R20 = 100k, R21 = 10k, donc facteur 11
+    float vbattRaw = AverageSamples(adcBuffer, 3) * 11.0f;
+    vbattFiltered = 0.99f * vbattFiltered + 0.01f * vbattRaw;
+
+    return
+    {
+        .ch =
+        {
+            {
+                .NernstVoltage = AverageSamples(adcBuffer, 0) * (1.0 / NERNST_INPUT_GAIN),
+                .PumpCurrentVoltage = AverageSamples(adcBuffer, 1),
+                .HeaterSupplyVoltage = vbattFiltered,
+            },
+        },
+        .VirtualGroundVoltageInt = AverageSamples(adcBuffer, 2),
+        .SupplyVoltage = vbattFiltered,
 
         // TODO!
         .McuTemp = 0,

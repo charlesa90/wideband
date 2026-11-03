@@ -23,3 +23,8 @@
 // *******************************
 #define ANALOG_PWM_DEVICE PWMD3
 #define ANALOG_PWM_CHANNEL 0
+
+// *******************************
+// Measure Battery tension by VBatt_Sense (PB0, divider 100k/10k)
+// *******************************
+#define BOARD_HAS_VOLTAGE_SENSE
