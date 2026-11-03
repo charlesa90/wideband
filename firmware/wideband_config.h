@@ -45,7 +45,7 @@
 #define HEATER_PREHEAT_TIME 5
 #define HEATER_WARMUP_TIMEOUT 60
 
-#define HEATER_BATTERY_STAB_TIME 1.0f //was 0.5. Prolonged to make sure not to catch a voltage spike. 
+#define HEATER_BATTERY_STAB_TIME 1.0f //was 0.5 (upstream). Longer than upstream to reject voltage spikes 
 // minimal battery voltage to start heating without CAN command
 #define HEATER_BATTERY_ON_VOLTAGE 13.2 //was 9.5. Idea is to get alternator charge voltage, implying that the engine is running.
 // mininal battery voltage to continue heating
